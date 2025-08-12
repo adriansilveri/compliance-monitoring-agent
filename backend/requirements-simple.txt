@@ -1,0 +1,33 @@
+# Core Framework
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+
+# Database
+sqlalchemy
+pymysql
+
+# Authentication & Security
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+
+# HTTP & API
+httpx
+requests
+
+# Data Processing
+pandas
+numpy
+
+# Testing
+pytest
+pytest-asyncio
+pytest-bdd
+
+# Development
+structlog
+
+# Date/Time
+python-dateutil

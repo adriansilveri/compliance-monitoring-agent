@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compliance-frontend
+  namespace: compliance-monitoring
+  labels:
+    app: compliance-frontend
+    component: ui
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: compliance-frontend
+  template:
+    metadata:
+      labels:
+        app: compliance-frontend
+        component: ui
+    spec:
+      containers:
+      - name: frontend
+        image: compliance-frontend:latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: REACT_APP_API_URL
+          value: "https://compliance-api.yourdomain.com/api/v1"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 101
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: compliance-frontend-service
+  namespace: compliance-monitoring
+  labels:
+    app: compliance-frontend
+spec:
+  selector:
+    app: compliance-frontend
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+  type: ClusterIP

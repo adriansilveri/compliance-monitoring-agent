@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compliance-backend
+  namespace: compliance-monitoring
+  labels:
+    app: compliance-backend
+    component: api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: compliance-backend
+  template:
+    metadata:
+      labels:
+        app: compliance-backend
+        component: api
+    spec:
+      containers:
+      - name: backend
+        image: compliance-backend:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: compliance-secrets
+              key: database-url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: compliance-secrets
+              key: redis-url
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: compliance-secrets
+              key: secret-key
+        - name: DEBUG
+          value: "false"
+        - name: ALLOWED_HOSTS
+          value: "https://compliance.yourdomain.com"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: compliance-backend-service
+  namespace: compliance-monitoring
+  labels:
+    app: compliance-backend
+spec:
+  selector:
+    app: compliance-backend
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+  type: ClusterIP
